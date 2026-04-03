@@ -94,4 +94,21 @@ public class AppointmentDAO {
             return false;
         }
     }
+    
+ // Save prescription to database
+    public boolean savePrescription(int appointmentId, 
+                                     String medicine, String notes) {
+        String sql = "INSERT INTO prescriptions " +
+                     "(appointment_id, medicine, notes) VALUES (?, ?, ?)";
+        try {
+            PreparedStatement ps = DBConnection.getConnection().prepareStatement(sql);
+            ps.setInt(1, appointmentId);
+            ps.setString(2, medicine);
+            ps.setString(3, notes);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println("Prescription Error: " + e.getMessage());
+            return false;
+        }
+    }
 }

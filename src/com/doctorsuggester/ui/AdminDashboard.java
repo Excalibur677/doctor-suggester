@@ -54,9 +54,14 @@ public class AdminDashboard extends JFrame {
         add(btnPanel, BorderLayout.SOUTH);
 
         logoutBtn.addActionListener(e -> {
-            SessionManager.clearSession();
-            new LoginScreen().setVisible(true);
-            dispose();
+            int confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to logout?",
+                "Logout", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                SessionManager.clearSession();
+                new WelcomeScreen().setVisible(true); // ← goes back to welcome
+                dispose();
+            }
         });
     }
 }

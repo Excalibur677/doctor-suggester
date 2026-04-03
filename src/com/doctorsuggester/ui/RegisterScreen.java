@@ -72,7 +72,7 @@ public class RegisterScreen extends JFrame {
             boolean success = userDAO.registerPatient(name, email, password, phone);
             if (success) {
                 JOptionPane.showMessageDialog(this, "Registration successful! Please login.");
-                new LoginScreen().setVisible(true);
+                new LoginScreen("patient").setVisible(true);
                 dispose();
             } else {
                 JOptionPane.showMessageDialog(this, "Registration failed! Email may already exist.");
@@ -80,7 +80,7 @@ public class RegisterScreen extends JFrame {
         });
 
         backBtn.addActionListener(e -> {
-            new LoginScreen().setVisible(true);
+        	new LoginScreen("patient").setVisible(true);
             dispose();
         });
     }

@@ -18,16 +18,14 @@ public class PatientDashboard extends JFrame {
 
     public PatientDashboard() {
         setTitle("Patient Dashboard");
-        setSize(750, 550);
+        setSize(900, 550);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
         getContentPane().setBackground(UITheme.BACKGROUND);
 
         // Header
-        add(UITheme.createHeaderPanel(
-            "👤 Welcome, " + SessionManager.getUserName()),
-            BorderLayout.NORTH);
+        add(UITheme.createHeaderPanel("Welcome, " + SessionManager.getUserName()), BorderLayout.NORTH);
 
         // Table
         String[] columns = {"ID", "Doctor", "Date", "Status"};
@@ -51,11 +49,12 @@ public class PatientDashboard extends JFrame {
         // Buttons
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
         btnPanel.setBackground(UITheme.BACKGROUND);
-
-        JButton symptomBtn      = UITheme.createButton("🔍 Check Symptoms", UITheme.PRIMARY);
-        JButton refreshBtn      = UITheme.createButton("🔄 Refresh", UITheme.WARNING);
-        JButton prescriptionBtn = UITheme.createButton("📋 Get Prescription", UITheme.SUCCESS);
-        JButton logoutBtn       = UITheme.createButton("Logout", UITheme.DANGER);
+        
+        JButton symptomBtn      = UITheme.createButton("Check Symptoms", UITheme.PRIMARY);
+        JButton refreshBtn      = UITheme.createButton("Refresh", UITheme.WARNING);
+        JButton prescriptionBtn = UITheme.createButton("Get Prescription", UITheme.SUCCESS);
+        JButton logoutBtn = UITheme.createButton("Logout", UITheme.DANGER);
+        btnPanel.add(logoutBtn);
 
         btnPanel.add(symptomBtn);
         btnPanel.add(refreshBtn);
@@ -70,6 +69,16 @@ public class PatientDashboard extends JFrame {
         symptomBtn.addActionListener(e -> {
             new SymptomScreen().setVisible(true);
             dispose();
+        });
+        logoutBtn.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to logout?",
+                "Logout", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                SessionManager.clearSession();
+                new WelcomeScreen().setVisible(true);
+                dispose();
+            }
         });
 
         refreshBtn.addActionListener(e -> loadAppointments(model));
@@ -87,11 +96,15 @@ public class PatientDashboard extends JFrame {
         });
 
         logoutBtn.addActionListener(e -> {
-            SessionManager.clearSession();
-            new LoginScreen().setVisible(true);
-            dispose();
-        });
-    }
+            int confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to logout?",
+                "Logout", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                SessionManager.clearSession();
+                new WelcomeScreen().setVisible(true); // ← goes back to welcome
+                dispose();
+            }
+        });    }
 
     private void loadAppointments(DefaultTableModel model) {
         model.setRowCount(0);

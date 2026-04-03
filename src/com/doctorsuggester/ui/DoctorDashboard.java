@@ -10,13 +10,13 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
-
+import com.doctorsuggester.dao.UserDAO;
 public class DoctorDashboard extends JFrame {
 
     private JTable appointmentTable;
     private AppointmentDAO appointmentDAO = new AppointmentDAO();
     private DoctorDAO doctorDAO = new DoctorDAO();
-
+    private UserDAO userDAO = new UserDAO();
     public DoctorDashboard() {
         setTitle("Doctor Dashboard - " + SessionManager.getUserName());
         setSize(750, 500);
@@ -33,9 +33,37 @@ public class DoctorDashboard extends JFrame {
 
         // Table
         String[] columns = {"ID", "Patient", "Date", "Status"};
-        DefaultTableModel model = new DefaultTableModel(columns, 0);
+        DefaultTableModel model = new DefaultTableModel(columns, 0) {
+            public boolean isCellEditable(int r, int c) { return false; }
+        };
         appointmentTable = new JTable(model);
         add(new JScrollPane(appointmentTable), BorderLayout.CENTER);
+        
+        // Get doctor ID and load appointments
+        int doctorId = getDoctorId(SessionManager.getUserId());
+        loadAppointments(model, doctorId);
+        
+        
+        // Double click on appointment row to view patient
+        appointmentTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int row = appointmentTable.getSelectedRow();
+                    if (row == -1) return;
+
+                    int appointmentId = (int) model.getValueAt(row, 0);
+                    String patientName = model.getValueAt(row, 1).toString();
+
+                    // Get patient ID from appointment
+                    int patientId = userDAO
+                                    .getPatientIdByAppointment(appointmentId);
+
+                    new PatientHistoryScreen(
+                        patientName, patientId, appointmentId)
+                        .setVisible(true);
+                }
+            }
+        });
 
         // Buttons
         JPanel btnPanel = new JPanel(new FlowLayout());
@@ -55,9 +83,9 @@ public class DoctorDashboard extends JFrame {
         btnPanel.add(logoutBtn);
         add(btnPanel, BorderLayout.SOUTH);
 
-        // Get doctor ID and load appointments
-        int doctorId = getDoctorId(SessionManager.getUserId());
-        loadAppointments(model, doctorId);
+        
+        
+        
 
         // Actions
         confirmBtn.addActionListener(e ->
@@ -70,19 +98,20 @@ public class DoctorDashboard extends JFrame {
             updateSelectedStatus(model, doctorId, "cancelled"));
 
         logoutBtn.addActionListener(e -> {
-            SessionManager.clearSession();
-            new LoginScreen().setVisible(true);
-            dispose();
+            int confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to logout?",
+                "Logout", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                SessionManager.clearSession();
+                new WelcomeScreen().setVisible(true); // ← goes back to welcome
+                dispose();
+            }
         });
     }
 
+ // Correct method
     private int getDoctorId(int userId) {
-        List<Doctor> all = doctorDAO.getAllDoctors();
-        // Find doctor with matching userId
-        for (Doctor d : all) {
-            if (d.getDoctorId() > 0) return d.getDoctorId();
-        }
-        return 1;
+        return doctorDAO.getDoctorIdByUserId(userId);
     }
 
     private void loadAppointments(DefaultTableModel model, int doctorId) {
@@ -96,6 +125,7 @@ public class DoctorDashboard extends JFrame {
                 a.getStatus()
             });
         }
+    
     }
 
     private void updateSelectedStatus(DefaultTableModel model,
@@ -109,5 +139,8 @@ public class DoctorDashboard extends JFrame {
         appointmentDAO.updateStatus(appointmentId, status);
         JOptionPane.showMessageDialog(this, "Status updated to: " + status);
         loadAppointments(model, doctorId);
+    
     }
+    
+    
 }

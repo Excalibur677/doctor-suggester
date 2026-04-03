@@ -60,4 +60,19 @@ public class UserDAO {
         }
         return null;
     }
+    
+ // Get patient user_id from appointment
+    public int getPatientIdByAppointment(int appointmentId) {
+        String sql = "SELECT patient_id FROM appointments WHERE appointment_id = ?";
+        try {
+            PreparedStatement ps = DBConnection.getConnection().prepareStatement(sql);
+            ps.setInt(1, appointmentId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt("patient_id");
+        } catch (SQLException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+        return -1;
+    }
+    
 }

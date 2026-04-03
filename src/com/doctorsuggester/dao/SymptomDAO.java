@@ -56,4 +56,28 @@ public class SymptomDAO {
             return false;
         }
     }
+    
+ // Get symptom history by patient ID
+    public List<String> getSymptomsByPatient(int patientId) {
+        List<String> list = new ArrayList<>();
+        String sql = "SELECT s.symptom_name, s.specialization, ps.logged_at " +
+                     "FROM patient_symptoms ps " +
+                     "JOIN symptoms s ON ps.symptom_id = s.symptom_id " +
+                     "WHERE ps.patient_id = ? " +
+                     "ORDER BY ps.logged_at DESC";
+        try {
+            PreparedStatement ps = DBConnection.getConnection().prepareStatement(sql);
+            ps.setInt(1, patientId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(rs.getString("symptom_name") + 
+                         " | " + rs.getString("specialization") +
+                         " | " + rs.getString("logged_at"));
+            }
+        } catch (SQLException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+        return list;
+    }
+    
 }

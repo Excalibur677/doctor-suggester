@@ -61,4 +61,17 @@ public class DoctorDAO {
         }
         return list;
     }
+ // Get doctor_id by user_id
+    public int getDoctorIdByUserId(int userId) {
+        String sql = "SELECT doctor_id FROM doctors WHERE user_id = ?";
+        try {
+            PreparedStatement ps = DBConnection.getConnection().prepareStatement(sql);
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt("doctor_id");
+        } catch (SQLException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+        return -1;
+    }
 }

@@ -12,17 +12,37 @@ public class LoginScreen extends JFrame {
     private JTextField emailField;
     private JPasswordField passwordField;
     private UserDAO userDAO = new UserDAO();
+    private String expectedRole;
 
-    public LoginScreen() {
-        setTitle("Doctor Suggester - Login");
+    public LoginScreen(String role) {
+        this.expectedRole = role;
+
+        // Role specific title & color
+        String title = "";
+        Color headerColor = UITheme.HEADER_BG;
+
+        switch (role) {
+        case "patient": title = "Patient Login"; break;
+        case "doctor":  title = "Doctor Login";  break;
+        case "admin":   title = "Admin Login";   break;
+        }
+
+        setTitle("Doctor Suggester - " + role.toUpperCase() + " Login");
         setSize(450, 380);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
         getContentPane().setBackground(UITheme.BACKGROUND);
 
-        // Header
-        add(UITheme.createHeaderPanel("🏥 Doctor Suggester"), BorderLayout.NORTH);
+        // Header with role color
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(headerColor);
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
+        JLabel headerLabel = new JLabel(title, SwingConstants.CENTER);
+        headerLabel.setFont(UITheme.TITLE_FONT);
+        headerLabel.setForeground(Color.WHITE);
+        headerPanel.add(headerLabel, BorderLayout.CENTER);
+        add(headerPanel, BorderLayout.NORTH);
 
         // Form Panel
         JPanel formPanel = new JPanel(new GridBagLayout());
@@ -58,31 +78,46 @@ public class LoginScreen extends JFrame {
         // Login Button
         gbc.gridx = 0; gbc.gridy = 2;
         gbc.gridwidth = 2;
-        JButton loginBtn = UITheme.createButton("Login", UITheme.PRIMARY);
+        JButton loginBtn = UITheme.createButton("Login", headerColor);
         formPanel.add(loginBtn, gbc);
 
         add(formPanel, BorderLayout.CENTER);
 
-        // Register link
-        JPanel bottomPanel = new JPanel();
+        // Bottom panel
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
         bottomPanel.setBackground(UITheme.BACKGROUND);
-        JButton registerBtn = new JButton("New Patient? Register Here");
-        registerBtn.setBorderPainted(false);
-        registerBtn.setContentAreaFilled(false);
-        registerBtn.setForeground(UITheme.PRIMARY);
-        registerBtn.setFont(UITheme.NORMAL_FONT);
-        registerBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        bottomPanel.add(registerBtn);
-        add(bottomPanel, BorderLayout.SOUTH);
 
-        // Actions
-        loginBtn.addActionListener(e -> handleLogin());
-        registerBtn.addActionListener(e -> {
-            new RegisterScreen().setVisible(true);
+        // Show register only for patients
+        if (role.equals("patient")) {
+            JButton registerBtn = new JButton("New Patient? Register Here");
+            registerBtn.setBorderPainted(false);
+            registerBtn.setContentAreaFilled(false);
+            registerBtn.setForeground(UITheme.PRIMARY);
+            registerBtn.setFont(UITheme.NORMAL_FONT);
+            registerBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            registerBtn.addActionListener(e -> {
+                new RegisterScreen().setVisible(true);
+                dispose();
+            });
+            bottomPanel.add(registerBtn);
+        }
+
+        // Back button
+        JButton backBtn = new JButton("← Back to Home");
+        backBtn.setBorderPainted(false);
+        backBtn.setContentAreaFilled(false);
+        backBtn.setForeground(UITheme.DANGER);
+        backBtn.setFont(UITheme.NORMAL_FONT);
+        backBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        backBtn.addActionListener(e -> {
+            new WelcomeScreen().setVisible(true);
             dispose();
         });
+        bottomPanel.add(backBtn);
+        add(bottomPanel, BorderLayout.SOUTH);
 
-        setVisible(true);
+        // Login action
+        loginBtn.addActionListener(e -> handleLogin());
     }
 
     private void handleLogin() {
@@ -97,7 +132,15 @@ public class LoginScreen extends JFrame {
         }
 
         String[] result = userDAO.login(email, password);
+
         if (result != null) {
+            // Check if role matches
+            if (!result[2].equals(expectedRole)) {
+                JOptionPane.showMessageDialog(this,
+                    "❌ Invalid credentials for " + expectedRole + " login!",
+                    "Wrong Role", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
             SessionManager.setSession(
                 Integer.parseInt(result[0]), result[1], result[2]);
             openDashboard(result[2]);
@@ -115,9 +158,5 @@ public class LoginScreen extends JFrame {
             case "doctor":  new DoctorDashboard().setVisible(true);  break;
             case "admin":   new AdminDashboard().setVisible(true);   break;
         }
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new LoginScreen());
     }
 }
